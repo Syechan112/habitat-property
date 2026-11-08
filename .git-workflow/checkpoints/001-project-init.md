@@ -1,0 +1,1 @@
+[INIT] [PROJECT] initialize project structure with React, Vite, TypeScript, and Tailwind CSS v4

@@ -1,0 +1,20 @@
+{
+  "active_branch": "master",
+  "active_feature": "dev-sqlite-backend",
+  "workflow_status": "active",
+  "last_checkpoint": "002-sqlite-dev-backend",
+  "completed_features": [
+    "Project scaffolding",
+    "Tailwind CSS v4 Vite setup",
+    "Authentication and role routing",
+    "SQLite dev backend"
+  ],
+  "pending_features": [
+    "Buyer property discovery",
+    "Buyer inquiry and viewing",
+    "Seller property CRUD",
+    "Image management",
+    "Lead management",
+    "Admin dashboard and approval"
+  ]
+}
