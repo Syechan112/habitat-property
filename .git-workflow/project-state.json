@@ -1,8 +1,8 @@
 {
   "active_branch": "master",
-  "active_feature": "dev-sqlite-backend",
+  "active_feature": "buyer-property-discovery",
   "workflow_status": "active",
-  "last_checkpoint": "002-sqlite-dev-backend",
+  "last_checkpoint": "003-property-listings", 
   "completed_features": [
     "Project scaffolding",
     "Tailwind CSS v4 Vite setup",
@@ -10,7 +10,8 @@
     "SQLite dev backend"
   ],
   "pending_features": [
-    "Buyer property discovery",
+    "Buyer property search and filters",
+    "Property details and favorites/comparison",
     "Buyer inquiry and viewing",
     "Seller property CRUD",
     "Image management",

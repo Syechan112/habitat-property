@@ -10,10 +10,17 @@
 - [x] Verify build and dev server scripts <!-- id: 7 -->
 
 ## Development Test Backend
-- [ ] Replace Supabase runtime services with local SQLite API for development <!-- id: 16 -->
-- [ ] Add local image upload endpoint writing files to `public/uploads/` <!-- id: 17 -->
-- [ ] Seed local test data and define development start command <!-- id: 18 -->
-- [ ] Verify local auth, property data, and image upload flows <!-- id: 19 -->
+- [x] Replace Supabase runtime services with local SQLite API for development <!-- id: 16 -->
+- [x] Add local image upload endpoint writing files to `public/uploads/` <!-- id: 17 -->
+- [x] Seed local test data and define development start command <!-- id: 18 -->
+- [x] Verify local auth and property data flows <!-- id: 19 -->
+
+## Phase 3: Buyer Property Discovery
+- [x] Add property API client and map local SQLite response fields <!-- id: 20 -->
+- [x] Add responsive buyer property listing with loading, error, and empty states <!-- id: 21 -->
+- [ ] Add property search and filters (location, price, type) <!-- id: 22 -->
+- [ ] Add property detail page <!-- id: 23 -->
+- [ ] Add saved properties and comparison (maximum 3) <!-- id: 24 -->
 
 ## Phase 2: Authentication & Role Routing
 - [x] Initialize shadcn/ui with Tailwind v4 and add base UI components (button, input, label, card) <!-- id: 8 -->

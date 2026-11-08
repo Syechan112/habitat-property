@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { useAuth } from '@/app/providers/auth-provider'
 import LoginPage from '@/features/auth/pages/LoginPage'
 import RegisterPage from '@/features/auth/pages/RegisterPage'
+import BuyerPropertiesPage from '@/features/buyer/properties/page'
 
 function AuthenticatedLayout() {
   const { session, role } = useAuth()
@@ -14,7 +15,6 @@ function AuthenticatedLayout() {
 
 function DashboardLayout({ role }: { role: 'buyer' | 'seller' | 'admin' }) {
   const { signOut } = useAuth()
-  const title = role === 'buyer' ? 'Find your place' : role === 'seller' ? 'Seller workspace' : 'Platform overview'
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,9 +26,7 @@ function DashboardLayout({ role }: { role: 'buyer' | 'seller' | 'admin' }) {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">HABITAT PROPERTIES</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{title}</h1>
-        <p className="mt-2 text-muted-foreground">Your {role} dashboard is ready. Continue to property management and discovery.</p>
+        <Outlet />
       </main>
     </div>
   )
@@ -63,9 +61,17 @@ function AppRoutes() {
       <Route path="/login" element={session && role ? <Navigate to={`/${role}`} replace /> : <Login />} />
       <Route path="/register" element={session && role ? <Navigate to={`/${role}`} replace /> : <Register />} />
       <Route element={<AuthenticatedLayout />}>
-        <Route path="/buyer/*" element={<DashboardLayout role="buyer" />} />
-        <Route path="/seller/*" element={<DashboardLayout role="seller" />} />
-        <Route path="/admin/*" element={<DashboardLayout role="admin" />} />
+        <Route element={<DashboardLayout role="buyer" />}>
+          <Route path="/buyer" element={<BuyerPropertiesPage />} />
+          <Route path="/buyer/properties" element={<BuyerPropertiesPage />} />
+          <Route path="/buyer/properties/:id" element={<div className="text-center py-10"><h2 className="text-xl font-semibold">Property Detail Coming Soon</h2></div>} />
+        </Route>
+        <Route element={<DashboardLayout role="seller" />}>
+          <Route path="/seller" element={<div className="text-center py-10"><h2 className="text-xl font-semibold">Seller Dashboard</h2></div>} />
+        </Route>
+        <Route element={<DashboardLayout role="admin" />}>
+          <Route path="/admin" element={<div className="text-center py-10"><h2 className="text-xl font-semibold">Admin Dashboard</h2></div>} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to={session && role ? `/${role}` : '/login'} replace />} />
     </Routes>

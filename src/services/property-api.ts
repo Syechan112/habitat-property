@@ -15,8 +15,19 @@ export interface Property {
   status: 'draft' | 'pending' | 'available' | 'reserved' | 'sold' | 'rejected' | 'archived'
 }
 
-export interface PropertyResponse {
-  properties: Property[]
+interface ApiProperty {
+  id: number
+  title: string
+  description: string
+  price: number
+  location: string
+  city: string
+  property_type: string
+  bedrooms: number
+  bathrooms: number
+  area_sqft: number
+  images: Array<{ url: string; publicId: string }>
+  status: string
 }
 
 async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -28,14 +39,29 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
   return res.json()
 }
 
+function mapProperty(property: ApiProperty): Property {
+  return {
+    id: property.id,
+    title: property.title,
+    description: property.description,
+    price: property.price,
+    location: property.location,
+    city: property.city,
+    propertyType: property.property_type as Property['propertyType'],
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    areaSqft: property.area_sqft,
+    images: Array.isArray(property.images) ? property.images : [],
+    status: property.status as Property['status'],
+  }
+}
+
 class PropertyApi {
   private baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'
 
-  async getProperties(): Promise<PropertyResponse> {
-    const res = await fetch(`${this.baseUrl}/properties`)
-    if (!res.ok) throw new Error('Failed to load properties')
-    const data: PropertyResponse = await res.json()
-    return { properties: Array.isArray(data) ? data : data.properties ?? [] }
+  async getProperties(): Promise<{ properties: Property[] }> {
+    const data = await fetchJson<ApiProperty[]>(`${this.baseUrl}/properties`)
+    return { properties: data.map(mapProperty) }
   }
 
   async createProperty(data: any): Promise<any> {
