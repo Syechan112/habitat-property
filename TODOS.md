@@ -15,12 +15,15 @@
 - [x] Seed local test data and define development start command <!-- id: 18 -->
 - [x] Verify local auth and property data flows <!-- id: 19 -->
 
+## Phase 4: Buyer Inquiry & Viewing
+- [x] Persist viewing date and time in inquiry records
+
 ## Phase 3: Buyer Property Discovery
 - [x] Add property API client and map local SQLite response fields <!-- id: 20 -->
 - [x] Add responsive buyer property listing with loading, error, and empty states <!-- id: 21 -->
-- [ ] Add property search and filters (location, price, type) <!-- id: 22 -->
-- [ ] Add property detail page <!-- id: 23 -->
-- [ ] Add saved properties and comparison (maximum 3) <!-- id: 24 -->
+- [x] Add property search and filters (location, price, type) <!-- id: 22 -->
+- [x] Add property detail page <!-- id: 23 -->
+- [x] Add saved properties and comparison (maximum 3) <!-- id: 24 -->
 
 ## Phase 2: Authentication & Role Routing
 - [x] Initialize shadcn/ui with Tailwind v4 and add base UI components (button, input, label, card) <!-- id: 8 -->

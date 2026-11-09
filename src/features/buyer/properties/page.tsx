@@ -1,178 +1,137 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Search, MapPin, BedDouble, Ruler, SlidersHorizontal, Heart, Scale, X } from 'lucide-react'
 import { propertyApi } from '@/services/property-api'
 import type { Property } from '@/services/property-api'
+import { useFavoritesStore } from '@/stores/favorites-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+  maximumFractionDigits: 0,
+}).format(price)
+
+const propertyImage = (property: Property) => {
+  const image = property.images[0]?.url
+  if (!image) return '/placeholder-property.svg'
+  return image.startsWith('http') ? image : 'http://localhost:3001' + image
+}
 
 export default function PropertiesList() {
   const [properties, setProperties] = useState<Property[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [city, setCity] = useState('')
+  const [type, setType] = useState('')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [sort, setSort] = useState('newest')
+  const { ids: favoriteIds, toggle: toggleFavorite, compareIds, toggleCompare } = useFavoritesStore()
 
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setIsLoading(true)
-        const data = await propertyApi.getProperties()
-        setProperties(data.properties)
-      } catch (err) {
+    let active = true
+    propertyApi.getProperties()
+      .then((data) => { if (active) setProperties(data.properties) })
+      .catch((err: unknown) => {
         console.error('Failed to fetch properties', err)
-        setError('Failed to load properties. Please try again later.')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchProperties()
+        if (active) setError('Properti belum bisa dimuat. Pastikan server lokal sedang berjalan.')
+      })
+      .finally(() => { if (active) setIsLoading(false) })
+    return () => { active = false }
   }, [])
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price)
+  const cities = useMemo(() => Array.from(new Set(properties.map((property) => property.city).filter(Boolean))).sort(), [properties])
+  const filtered = useMemo(() => properties.filter((property) => {
+    const term = search.trim().toLowerCase()
+    const matchesSearch = !term || `${property.title} ${property.city} ${property.location} ${property.description}`.toLowerCase().includes(term)
+    const matchesCity = !city || property.city === city
+    const matchesType = !type || property.propertyType === type
+    const matchesMin = !minPrice || property.price >= Number(minPrice)
+    const matchesMax = !maxPrice || property.price <= Number(maxPrice)
+    return matchesSearch && matchesCity && matchesType && matchesMin && matchesMax
+  }).sort((a, b) => sort === 'price-asc' ? a.price - b.price : sort === 'price-desc' ? b.price - a.price : b.id - a.id), [properties, search, city, type, minPrice, maxPrice, sort])
+
+  const hasFilters = search.trim() !== '' || city !== '' || type !== '' || minPrice !== '' || maxPrice !== ''
+
+  const clearFilters = () => {
+    setSearch('')
+    setCity('')
+    setType('')
+    setMinPrice('')
+    setMaxPrice('')
+    setSort('newest')
   }
 
-  const getPropertyImage = (property: Property) => {
-    if (property.images && property.images.length > 0) {
-      return property.images[0].url.startsWith('http') 
-        ? property.images[0].url 
-        : `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}${property.images[0].url}`
-    }
-    return '/placeholder-property.svg'
-  }
-
-  if (isLoading) {
-    return (
-      <div className="grid place-items-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading properties...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="grid place-items-center min-h-[400px]">
-        <div className="text-center max-w-md">
-          <div className="text-destructive mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold mb-2">Unable to Load Properties</h2>
-          <p className="text-muted-foreground mb-6">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <div className="grid min-h-[400px] place-items-center text-muted-foreground" role="status">Memuat properti…</div>
+  if (error) return <div className="grid min-h-[400px] place-items-center"><Card className="max-w-md"><CardContent className="space-y-4 pt-6 text-center"><h2 className="text-xl font-semibold">Properti gagal dimuat</h2><p className="text-muted-foreground">{error}</p><Button onClick={() => window.location.reload()}>Coba lagi</Button></CardContent></Card></div>
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8">
+      <section className="relative overflow-hidden rounded-3xl bg-primary px-6 py-10 text-primary-foreground sm:px-10 sm:py-14">
+        <div className="absolute -right-12 -top-24 h-72 w-72 rounded-full border border-white/10" />
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">HABITAT PROPERTIES</p>
+        <h1 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight sm:text-5xl">Temukan tempat yang terasa seperti rumah.</h1>
+        <p className="mt-4 max-w-xl text-sm text-white/70 sm:text-base">Jelajahi pilihan properti terkurasi untuk langkah hidup berikutnya.</p>
+      </section>
+
+      <section className="grid gap-3 rounded-2xl border border-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-6" aria-label="Filter properti">
+        <div className="relative lg:col-span-2">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Input aria-label="Cari properti" className="pl-9" placeholder="Cari lokasi atau properti" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Property Listings</h1>
-          <p className="text-muted-foreground mt-1">
-            Discover {properties.length} available {properties.length === 1 ? 'property' : 'properties'}
-          </p>
+          <Label className="sr-only" htmlFor="city-filter">Kota</Label>
+          <select id="city-filter" className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm" value={city} onChange={(event) => setCity(event.target.value)}>
+            <option value="">Semua kota</option>{cities.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
         </div>
-
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search properties..."
-            className="w-full sm:w-64 pl-10 pr-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <svg 
-            className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+        <div>
+          <Label className="sr-only" htmlFor="type-filter">Tipe properti</Label>
+          <select id="type-filter" className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm" value={type} onChange={(event) => setType(event.target.value)}>
+            <option value="">Semua tipe</option><option value="house">Rumah</option><option value="apartment">Apartemen</option><option value="villa">Villa</option><option value="land">Tanah</option><option value="commercial">Komersial</option>
+          </select>
         </div>
-      </div>
+        <Input aria-label="Harga minimum" type="number" min="0" placeholder="Harga min. (Rp)" value={minPrice} onChange={(event) => setMinPrice(event.target.value)} />
+        <Input aria-label="Harga maksimum" type="number" min="0" placeholder="Harga maks. (Rp)" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} />
+        <div className="flex flex-wrap items-center gap-2 lg:col-span-6">
+          <SlidersHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Label className="sr-only" htmlFor="sort-filter">Urutkan</Label>
+          <select id="sort-filter" className="h-9 rounded-md border border-input bg-white px-3 text-sm" value={sort} onChange={(event) => setSort(event.target.value)}>
+            <option value="newest">Terbaru</option><option value="price-asc">Harga terendah</option><option value="price-desc">Harga tertinggi</option>
+          </select>
+          {hasFilters ? <Button variant="ghost" size="sm" onClick={clearFilters}><X className="h-4 w-4" />Hapus filter</Button> : <span className="hidden lg:inline-block" />}
+          <span className="ml-auto text-sm text-muted-foreground">{filtered.length} properti</span>
+        </div>
+      </section>
 
-      {properties.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-4xl mb-4">🏠</div>
-            <h3 className="text-lg font-medium mb-2">No Properties Available</h3>
-            <p className="text-muted-foreground text-center max-w-sm">
-              There are currently no properties available. Check back later or contact support.
-            </p>
-          </CardContent>
-        </Card>
+      {compareIds.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-secondary p-4 text-sm"><span>{compareIds.length}/3 properti dipilih untuk perbandingan</span><Link className="font-semibold underline" to="/buyer/compare">Bandingkan pilihan</Link></div>}
+
+      {filtered.length === 0 ? (
+        <Card><CardContent className="py-14 text-center"><h2 className="text-lg font-semibold">Properti tidak ditemukan</h2><p className="mt-2 text-sm text-muted-foreground">Ubah kata kunci atau hapus beberapa filter.</p><Button variant="outline" className="mt-4" onClick={clearFilters}>Reset filter</Button></CardContent></Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => (
-            <Link
-              key={property.id}
-              to={`/buyer/properties/${property.id}`}
-              className="group block"
-            >
-              <Card className="h-full hover:shadow-lg transition-shadow duration-200">
-                <div className="aspect-video w-full overflow-hidden rounded-t-lg bg-muted">
-                  <img 
-                    src={getPropertyImage(property)} 
-                    alt={property.title}
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder-property.svg';
-                    }}
-                  />
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((property) => (
+            <Card key={property.id} className="group overflow-hidden border-0 shadow-sm transition-shadow hover:shadow-lg">
+              <Link to={`/buyer/properties/${property.id}`} aria-label={`Lihat ${property.title}`}>
+                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                  <img src={propertyImage(property)} alt={property.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onError={(event) => { event.currentTarget.src = '/placeholder-property.svg' }} />
+                  <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold capitalize">{property.propertyType}</span>
                 </div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg line-clamp-1">{property.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-primary mb-2">
-                    {formatPrice(property.price)}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1112.829-12.182" />
-                      </svg>
-                      {property.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4 0h1m-5-4v4m3 0v4" />
-                      </svg>
-                      {property.bedrooms} bed
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {property.areaSqft} sqft
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t border-border">
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full
-                      ${property.status === 'available' ? 'bg-green-100 text-green-800' :
-                         property.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                         property.status === 'sold' ? 'bg-red-100 text-red-800' :
-                         'bg-gray-100 text-gray-800'}
-                    }`}
-                    >
-                      {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
-                    </span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {property.city}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+              </Link>
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-3"><CardTitle className="line-clamp-1 text-lg">{property.title}</CardTitle><button type="button" aria-label={favoriteIds.includes(property.id) ? 'Hapus dari favorit' : 'Simpan ke favorit'} aria-pressed={favoriteIds.includes(property.id)} onClick={() => toggleFavorite(property.id)} className="rounded-full p-2 text-muted-foreground hover:bg-secondary hover:text-primary"><Heart className={`h-4 w-4 ${favoriteIds.includes(property.id) ? 'fill-accent text-accent' : ''}`} /></button></div>
+                <p className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{property.location}, {property.city}</p>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-semibold">{formatPrice(property.price)}</p>
+                <div className="mt-4 flex items-center gap-4 border-t border-border pt-4 text-sm text-muted-foreground"><span className="flex items-center gap-1"><BedDouble className="h-4 w-4" />{property.bedrooms} kamar</span><span className="flex items-center gap-1"><Ruler className="h-4 w-4" />{property.areaSqft} m²</span><button type="button" className="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-secondary" aria-pressed={compareIds.includes(property.id)} onClick={() => toggleCompare(property.id)}><Scale className="h-4 w-4" />{compareIds.includes(property.id) ? 'Dipilih' : 'Bandingkan'}</button></div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

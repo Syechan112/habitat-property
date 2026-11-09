@@ -3,6 +3,8 @@ import { useAuth } from '@/app/providers/auth-provider'
 import LoginPage from '@/features/auth/pages/LoginPage'
 import RegisterPage from '@/features/auth/pages/RegisterPage'
 import BuyerPropertiesPage from '@/features/buyer/properties/page'
+import PropertyDetailPage from '@/features/buyer/properties/detail-page'
+import ComparePage from '@/features/buyer/properties/compare-page'
 
 function AuthenticatedLayout() {
   const { session, role } = useAuth()
@@ -64,7 +66,8 @@ function AppRoutes() {
         <Route element={<DashboardLayout role="buyer" />}>
           <Route path="/buyer" element={<BuyerPropertiesPage />} />
           <Route path="/buyer/properties" element={<BuyerPropertiesPage />} />
-          <Route path="/buyer/properties/:id" element={<div className="text-center py-10"><h2 className="text-xl font-semibold">Property Detail Coming Soon</h2></div>} />
+          <Route path="/buyer/properties/:id" element={<PropertyDetailPage />} />
+          <Route path="/buyer/compare" element={<ComparePage />} />
         </Route>
         <Route element={<DashboardLayout role="seller" />}>
           <Route path="/seller" element={<div className="text-center py-10"><h2 className="text-xl font-semibold">Seller Dashboard</h2></div>} />

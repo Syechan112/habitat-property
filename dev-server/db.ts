@@ -56,7 +56,32 @@ db.exec(`
     uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(property_id) REFERENCES properties(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    property_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, property_id),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(property_id) REFERENCES properties(id) ON DELETE CASCADE
+  );
+
 `);
+
+// Lightweight column migration for existing local databases
+const userColumns = db.prepare('PRAGMA table_info(users)').all() as Array<{ name: string }>;
+if (!userColumns.some((column) => column.name === 'phone')) {
+  db.exec('ALTER TABLE users ADD COLUMN phone TEXT');
+}
+
+const inquiryColumns = db.prepare('PRAGMA table_info(inquiries)').all() as Array<{ name: string }>;
+if (!inquiryColumns.some((column) => column.name === 'viewing_date')) {
+  db.exec('ALTER TABLE inquiries ADD COLUMN viewing_date TEXT');
+}
+if (!inquiryColumns.some((column) => column.name === 'viewing_time')) {
+  db.exec('ALTER TABLE inquiries ADD COLUMN viewing_time TEXT');
+}
 
 export { db };
 export default db;

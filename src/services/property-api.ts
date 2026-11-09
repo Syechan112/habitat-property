@@ -64,6 +64,11 @@ class PropertyApi {
     return { properties: data.map(mapProperty) }
   }
 
+  async getProperty(id: number): Promise<Property> {
+    const data = await fetchJson<{ property: ApiProperty }>(`${this.baseUrl}/properties/${id}`)
+    return mapProperty(data.property)
+  }
+
   async createProperty(data: any): Promise<any> {
     const { token } = localAuthService.getSession() ?? {}
     if (!token) throw new Error('Not authenticated')
