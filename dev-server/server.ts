@@ -135,7 +135,27 @@ app.post('/api/properties', auth, (req, res) => {
 app.get('/api/properties/my', auth, (req, res) => {
   if (req.user.role !== 'seller' && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   const rows = db.prepare(`SELECT p.*, u.email AS seller_email FROM properties p JOIN users u ON p.seller_id = u.id WHERE p.seller_id = ? ORDER BY p.created_at DESC`).all(req.user.id) as any[];
-  return res.json(rows.map((r) => ({ ...r, propertyType: r.property_type, areaSqft: r.area_sqft, images: [] })));
+  return res.json(rows.map((r) => ({ ...r, propertyType: r.property_type, areaSqft: r.area_sqft, images: db.prepare('SELECT file_path AS url, file_path AS publicId FROM images WHERE property_id = ?').all(r.id) })));
+});
+
+app.patch('/api/properties/:id/status', auth, (req, res) => {
+  if (req.user.role !== 'seller' && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const property = req.user.role === 'admin'
+    ? db.prepare('SELECT id FROM properties WHERE id = ?').get(Number(req.params.id))
+    : db.prepare('SELECT id FROM properties WHERE id = ? AND seller_id = ?').get(Number(req.params.id), req.user.id);
+  if (!property) return res.status(404).json({ error: 'Not found' });
+  const { status } = req.body;
+  if (!['draft', 'pending', 'available', 'reserved', 'sold', 'rejected', 'archived'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  db.prepare('UPDATE properties SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(status, Number(req.params.id));
+  return res.json({ ok: true });
+});
+
+app.delete('/api/properties/:id', auth, (req, res) => {
+  if (req.user.role !== 'seller' && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const property = db.prepare('SELECT id FROM properties WHERE id = ? AND seller_id = ?').get(Number(req.params.id), req.user.id);
+  if (!property) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM properties WHERE id = ?').run(Number(req.params.id));
+  return res.json({ ok: true });
 });
 
 app.post('/api/upload', auth, upload.single('image'), (req, res) => {
@@ -184,6 +204,20 @@ app.get('/api/inquiries', auth, (req, res) => {
 app.patch('/api/inquiries/:id/status', auth, (req, res) => {
   if (req.user.role !== 'seller' && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   db.prepare('UPDATE inquiries SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(req.body.status, Number(req.params.id));
+  return res.json({ ok: true });
+});
+
+app.get('/api/users', auth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const rows = db.prepare('SELECT id, email, role, phone, created_at FROM users ORDER BY created_at DESC').all() as any[];
+  return res.json(rows);
+});
+
+app.delete('/api/users/:id', auth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const userId = Number(req.params.id);
+  if (userId === req.user.id) return res.status(400).json({ error: 'Cannot delete yourself' });
+  db.prepare('DELETE FROM users WHERE id = ?').run(userId);
   return res.json({ ok: true });
 });
 

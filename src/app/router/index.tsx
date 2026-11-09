@@ -5,6 +5,9 @@ import RegisterPage from '@/features/auth/pages/RegisterPage'
 import BuyerPropertiesPage from '@/features/buyer/properties/page'
 import PropertyDetailPage from '@/features/buyer/properties/detail-page'
 import ComparePage from '@/features/buyer/properties/compare-page'
+import SellerDashboardPage from '@/features/seller/dashboard/page'
+import SellerListingsPage from '@/features/seller/listings/page'
+import AdminDashboardPage from '@/features/admin/dashboard/page'
 
 function AuthenticatedLayout() {
   const { session, role } = useAuth()
@@ -70,10 +73,16 @@ function AppRoutes() {
           <Route path="/buyer/compare" element={<ComparePage />} />
         </Route>
         <Route element={<DashboardLayout role="seller" />}>
-          <Route path="/seller" element={<div className="text-center py-10"><h2 className="text-xl font-semibold">Seller Dashboard</h2></div>} />
+          <Route path="/seller" element={<SellerDashboardPage />} />
+          <Route path="/seller/listings" element={<SellerListingsPage />} />
+          <Route path="/seller/listings/:id" element={<SellerListingsPage />} />
+          <Route path="/seller/listings/new" element={<SellerListingsPage />} />
         </Route>
         <Route element={<DashboardLayout role="admin" />}>
-          <Route path="/admin" element={<div className="text-center py-10"><h2 className="text-xl font-semibold">Admin Dashboard</h2></div>} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<AdminDashboardPage />} />
+          <Route path="/admin/approvals" element={<AdminDashboardPage />} />
+          <Route path="/admin/inquiries" element={<AdminDashboardPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to={session && role ? `/${role}` : '/login'} replace />} />

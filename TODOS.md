@@ -17,6 +17,7 @@
 
 ## Phase 4: Buyer Inquiry & Viewing
 - [x] Persist viewing date and time in inquiry records
+- [x] Implement seller dashboard & property CRUD functionality (create, list, patch status, delete)
 
 ## Phase 3: Buyer Property Discovery
 - [x] Add property API client and map local SQLite response fields <!-- id: 20 -->
