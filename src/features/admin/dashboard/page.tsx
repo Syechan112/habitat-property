@@ -1,170 +1,171 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { AlertCircle, RefreshCw, CheckCircle2, Home, MessageSquare, Users, Calendar } from 'lucide-react'
-import { adminApi, type AdminUser, type AdminProperty, type AdminInquiry } from '@/services/admin-api'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useEffect, useState, useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  adminApi,
+  type AdminProperty,
+  type AdminUser,
+  type AdminInquiry,
+} from '@/services/admin-api'
+import {
+  AdminOverviewTab,
+  AdminApprovalsTab,
+  AdminUsersTab,
+  AdminInquiriesTab,
+} from './components'
 
-type Tab = 'overview' | 'users' | 'approvals' | 'inquiries'
+type Tab = 'overview' | 'approvals' | 'users' | 'inquiries'
+
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(price)
 
 export default function AdminDashboardPage() {
-  const [tab, setTab] = useState<Tab>('overview')
-  const [stats, setStats] = useState({ users: 0, properties: 0, pending: 0, available: 0, inquiries: 0 })
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const activeTab: Tab = useMemo(() => {
+    if (location.pathname.startsWith('/admin/approvals')) return 'approvals'
+    if (location.pathname.startsWith('/admin/users')) return 'users'
+    if (location.pathname.startsWith('/admin/inquiries')) return 'inquiries'
+    return 'overview'
+  }, [location.pathname])
+
+  const handleTabChange = (t: Tab) => {
+    if (t === 'approvals') navigate('/admin/approvals')
+    else if (t === 'users') navigate('/admin/users')
+    else if (t === 'inquiries') navigate('/admin/inquiries')
+    else navigate('/admin')
+  }
+
   const [users, setUsers] = useState<AdminUser[]>([])
   const [properties, setProperties] = useState<AdminProperty[]>([])
   const [inquiries, setInquiries] = useState<AdminInquiry[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-  const [searchProperty, setSearchProperty] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
 
   const loadData = () => {
-    Promise.all([adminApi.getUsers(), adminApi.getAllProperties(), adminApi.getInquiries()])
-      .then(([usersList, props, inquiryList]) => {
-        setUsers(usersList)
-        setProperties(props)
-        setInquiries(inquiryList)
-        setStats({
-          users: usersList.length,
-          properties: props.length,
-          pending: props.filter((p) => p.status === 'pending').length,
-          available: props.filter((p) => p.status === 'available').length,
-          inquiries: inquiryList.length,
-        })
-        setError(null)
+    setLoading(true)
+    Promise.all([
+      adminApi.getUsers().catch(() => []),
+      adminApi.getAllProperties().catch(() => []),
+      adminApi.getInquiries().catch(() => []),
+    ])
+      .then(([uList, pList, iList]) => {
+        setUsers(uList)
+        setProperties(pList)
+        setInquiries(iList)
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Gagal memuat data'))
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => {
     loadData()
   }, [])
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price)
+  const pendingApprovals = properties.filter((p) => p.status === 'pending')
+  const availableProperties = properties.filter((p) => p.status === 'available')
 
-  const applyStatus = async (fn: () => Promise<any>) => {
+  const handleApprove = async (id: number) => {
     try {
-      await fn()
-      setMessage('Perubahan berhasil.')
+      await adminApi.updatePropertyStatus(id, 'available')
+      setActionMessage('Listing berhasil disetujui dan kini tayang di katalog publik.')
       loadData()
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan')
+    } catch (e: unknown) {
+      setActionMessage(`Gagal menyetujui: ${e instanceof Error ? e.message : 'Kesalahan sistem'}`)
     }
   }
 
-  const handleApprove = (property: AdminProperty) =>
-    applyStatus(() => adminApi.updatePropertyStatus(property.id, 'available'))
+  const handleReject = async (id: number) => {
+    if (!window.confirm('Tolak listing ini dari kurasi Habitat?')) return
+    try {
+      await adminApi.updatePropertyStatus(id, 'rejected')
+      setActionMessage('Listing berhasil ditolak.')
+      loadData()
+    } catch (e: unknown) {
+      setActionMessage(`Gagal menolak: ${e instanceof Error ? e.message : 'Kesalahan sistem'}`)
+    }
+  }
 
-  const handleReject = (property: AdminProperty) =>
-    applyStatus(() => adminApi.updatePropertyStatus(property.id, 'rejected'))
+  const handleDeleteUser = async (userId: number, email: string) => {
+    if (!window.confirm(`Hapus pengguna ${email}?`)) return
+    try {
+      await adminApi.deleteUser(userId)
+      setActionMessage(`Pengguna ${email} berhasil dihapus.`)
+      loadData()
+    } catch (e: unknown) {
+      setActionMessage(`Gagal menghapus pengguna: ${e instanceof Error ? e.message : 'Kesalahan sistem'}`)
+    }
+  }
 
-  const filteredProperties = searchProperty
-    ? properties.filter(
-        (p) =>
-          p.title.toLowerCase().includes(searchProperty.toLowerCase()) ||
-          p.city.toLowerCase().includes(searchProperty.toLowerCase()),
-      )
-    : properties
-
-  const pendingProperties = filteredProperties.filter((p) => p.status === 'pending')
-
-  const tabs = [
-    { id: 'overview' as const, label: 'Ringkasan', icon: AlertCircle, count: undefined as number | undefined },
-    { id: 'users' as const, label: 'Pengguna', icon: Users, count: stats.users },
-    { id: 'approvals' as const, label: 'Persetujuan', icon: CheckCircle2, count: stats.pending },
-    { id: 'inquiries' as const, label: 'Inquiry', icon: MessageSquare, count: stats.inquiries },
-  ]
+  if (loading && properties.length === 0) {
+    return (
+      <div className="min-h-screen bg-canvas px-6 py-32 flex flex-col items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-900 border-t-accent" />
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-8">
-      <section className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Admin Dashboard</h1>
-          <p className="mt-1 text-muted-foreground">Kelola platform, pengguna, dan daftar properti.</p>
-        </div>
-        <Button variant="outline" onClick={loadData}><RefreshCw className="h-4 w-4" /></Button>
-      </section>
+    <div className="min-h-screen bg-canvas px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* Header Bar */}
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200/60">
+          <div className="space-y-2">
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-950">
+              Habitat Command Center
+            </h1>
+            <p className="text-sm text-slate-500 max-w-xl">
+              Audit kepatuhan arsitektural, persetujuan listing properti baru, dan pengawasan interaksi platform.
+            </p>
+          </div>
+        </header>
 
-      {message && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">{message}</p>}
-      {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+        {actionMessage && (
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 text-xs font-semibold text-slate-900 shadow-tactile-xs animate-fade-in">
+            <span>{actionMessage}</span>
+            <button onClick={() => setActionMessage(null)} className="text-slate-400 hover:text-slate-700">
+              Tutup
+            </button>
+          </div>
+        )}
 
-      <nav className="border-b border-border pt-4 pb-2" aria-label="Navigasi admin">
-        <ol className="-mb-px flex space-x-6">
-          {tabs.map((t) => (
-            <li key={t.id}>
-              <button
-                type="button"
-                onClick={() => setTab(t.id)}
-                className={`relative inline-flex items-center px-3 py-4 text-sm font-medium transition-colors ${tab === t.id ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <t.icon className="mr-2 h-4 w-4" />
-                {t.label}
-                {t.count !== undefined && t.count > 0 && (
-                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs text-white">{t.count}</span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ol>
-      </nav>
+        {/* Navigation Tabs Pill */}  
 
-      {tab === 'overview' && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            { label: 'Total Pengguna', value: stats.users, icon: Users, muted: false },
-            { label: 'Total Listing', value: stats.properties, icon: Home, muted: false },
-            { label: 'Menunggu Persetujuan', value: stats.pending, icon: CheckCircle2, muted: stats.pending === 0 },
-            { label: 'Tersedia', value: stats.available, icon: CheckCircle2, muted: stats.available === 0 },
-            { label: 'Total Inquiry', value: stats.inquiries, icon: MessageSquare, muted: stats.inquiries === 0 },
-          ].map((card) => (
-            <Card key={card.label}><CardContent className="pt-6"><div className="flex items-center justify-between"><p className="text-sm font-medium text-muted-foreground">{card.label}</p><card.icon className={`h-4 w-4 ${card.muted ? 'text-muted-foreground' : 'text-accent'}`} /></div><p className="mt-2 text-3xl font-semibold">{card.value}</p></CardContent></Card>
-          ))}
-          <Card className="lg:col-span-5"><CardContent className="pt-6"><Link to="/admin/approvals" className="text-sm text-primary underline">Lihat semua listing perlu persetujuan →</Link></CardContent></Card>
-        </div>
-      )}
+        {/* Tab Content Views */}
+        {activeTab === 'overview' && (
+          <AdminOverviewTab
+            userCount={users.length}
+            availableCount={availableProperties.length}
+            pendingApprovals={pendingApprovals}
+            inquiryCount={inquiries.length}
+            onNavigateToApprovals={() => handleTabChange('approvals')}
+          />
+        )}
 
-      {tab === 'users' && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Daftar Pengguna ({users.length})</h2>
-          {users.length === 0 ? <Card><CardContent className="py-14 text-center text-muted-foreground">Belum ada pengguna.</CardContent></Card> : (
-            <div className="grid gap-3">
-              {users.map((u) => (
-                <Card key={u.id}><CardContent className="p-4 flex items-center gap-4"><div className="flex-1"><p className="font-semibold">{u.email}</p><p className="text-sm text-muted-foreground capitalize">{u.role}</p></div><span className="rounded-full border border-border px-2 py-0.5 text-xs capitalize">{u.role}</span><span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString('id-ID')}</span></CardContent></Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        {activeTab === 'approvals' && (
+          <AdminApprovalsTab
+            pendingApprovals={pendingApprovals}
+            formatPrice={formatPrice}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
+        )}
 
-      {tab === 'approvals' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Persetujuan Properti</h2></div>
-          <Input placeholder="Cari judul atau kota..." value={searchProperty} onChange={(e) => setSearchProperty(e.target.value)} />
-          {pendingProperties.length === 0 && !searchProperty ? (
-            <Card><CardContent className="py-14 text-center text-muted-foreground">Tidak ada listing menunggu persetujuan.</CardContent></Card>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {pendingProperties.map((property) => (
-                <Card key={property.id}><CardContent className="p-4"><div className="aspect-[4/3] overflow-hidden rounded-md bg-muted"><img src={property.images[0]?.url ? `http://localhost:3001${property.images[0].url}` : '/placeholder-property.svg'} alt={property.title} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = '/placeholder-property.svg' }} /></div><h3 className="mt-3 line-clamp-1 font-semibold">{property.title}</h3><p className="text-sm text-muted-foreground">{property.location}, {property.city}</p><p className="text-sm font-semibold">{formatPrice(property.price)}</p><div className="mt-3 flex items-center gap-2"><span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800">{property.status}</span><Button size="sm" className="ml-auto" variant="outline" onClick={() => handleApprove(property)}>Approve</Button><Button size="sm" variant="destructive" onClick={() => handleReject(property)}>Reject</Button></div></CardContent></Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        {activeTab === 'users' && (
+          <AdminUsersTab
+            users={users}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onDeleteUser={handleDeleteUser}
+          />
+        )}
 
-      {tab === 'inquiries' && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Semua Inquiry</h2>
-          {inquiries.length === 0 ? <Card><CardContent className="py-14 text-center text-muted-foreground">Belum ada inquiry masuk.</CardContent></Card> : (
-            <div className="grid gap-3">
-              {inquiries.map((inq) => (
-                <Card key={inq.id}><CardContent className="p-4"><div className="flex items-start justify-between gap-4"><div className="flex-1"><p className="font-semibold">{inq.title}</p><div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground"><span className="flex items-center gap-1"><MessageSquare className="h-4 w-4" />{inq.buyer_email}</span><span className="flex items-center gap-1"><Home className="h-4 w-4" />{inq.seller_email}</span><span className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" />{inq.phone}</span>{inq.viewing_date && <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{inq.viewing_date}{inq.viewing_time ? ` • ${inq.viewing_time}` : ''}</span>}</div><p className="mt-2 line-clamp-2 text-sm leading-relaxed">{inq.message}</p></div><select className="rounded-md border border-input px-2 py-1 text-xs" value={inq.status} onChange={async (e) => { await applyStatus(() => adminApi.updateInquiryStatus(inq.id, e.target.value)); }}>{'new|contacted|interested|viewing|negotiation|won|lost'.split('|').map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}</select></div></CardContent></Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        {activeTab === 'inquiries' && <AdminInquiriesTab inquiries={inquiries} />}
+      </div>
     </div>
   )
 }

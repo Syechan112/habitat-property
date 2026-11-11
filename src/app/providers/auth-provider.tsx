@@ -47,7 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = useCallback(async (email: string, password: string, selectedRole: UserRole) => {
     setIsLoading(true)
     try {
-      await localAuthService.signUp({ email, password, role: selectedRole })
+      const res = await localAuthService.signUp({ email, password, role: selectedRole })
+      if (res?.token && res?.user) {
+        localAuthService.persistSession(res.token, res.user)
+        setSession(res)
+      }
       setIsLoading(false)
       return { error: null }
     } catch (err: any) {

@@ -19,6 +19,47 @@
 - [x] Persist viewing date and time in inquiry records
 - [x] Implement seller dashboard & property CRUD functionality (create, list, patch status, delete)
 
+## Phase 7: Full Local Storage Architecture & Client-Side Resizing (Zero Cloud Dependencies)
+- [x] Client-side HTML5 Canvas image resizer & WebP converter (`src/utils/image-resizer.ts`)
+- [x] Device Storage Manager (`src/services/device-storage.ts`) using localStorage & initial dataset
+- [x] Zero-token, zero-cloud architecture (Cloudinary & Supabase credentials fully optional)
+- [x] Standalone offline & static hosting compatibility for Buyer discovery, Seller CRUD, and Admin approval flow
+- [x] Seller upload pipeline with automatic client-side compression (saves ~80-90% payload)
+
+## Phase 8: Final Audit & Responsive Polish
+- [x] Apply UI/UX visual polish to public, buyer, seller, and admin surfaces
+- [x] Full visual redesign using @ui-ux-design-pro across landing, auth, buyer, seller, and admin surfaces <!-- id: 25 -->
+- [x] Finish shared UI primitives with tactile glassmorphism and sub-pixel borders <!-- id: 26 -->
+- [x] Redesign Landing Page with 3D Focus Stage and editorial bento sections <!-- id: 27 -->
+- [x] Redesign Login and Register pages with split editorial auth layout <!-- id: 28 -->
+- [x] Reset shared UI primitives and clean @theme configuration <!-- id: 29 -->
+- [x] Extract shared layout components (Header, Footer, AuthLayout, DashboardLayout) <!-- id: 30 -->
+- [x] Refactor LandingPage to use global Header/Footer via router <!-- id: 31 -->
+- [x] Refactor LoginPage to use AuthLayout wrapper (no inline header) <!-- id: 32 -->
+- [x] Refactor RegisterPage to use AuthLayout wrapper (no inline header) <!-- id: 33 -->
+- [x] Redesign buyer property discovery, detail, compare, and viewing surfaces with Bento Grid <!-- id: 34 -->
+- [x] Redesign seller and admin dashboards with high-density bento architecture <!-- id: 30 -->
+- [x] Refactor LandingPage into modular components (HeroSection, MetricBanner, BentoFeatures, FeaturedProperties, ClosingCTA) <!-- id: 35 -->
+- [x] Modularize all features and layouts to under 200 lines (Buyer, Seller, Admin, Layout, UI) <!-- id: 36 -->
+- [x] Run responsive, accessibility, lint, and production build verification <!-- id: 31 -->
+- [ ] Add success/error toast notifications for all CRUD actions
+- [ ] Final security audit (JWT expiry, role-based RLS simulation)
+- [ ] Performance optimization (Image lazy loading, bundle size check)
+- [ ] Final build verification and PRD compliance check
+
+## Phase 5: Seller Dashboard & Property CRUD
+- [x] Add seller API client with property and inquiry management
+- [x] Implement seller dashboard with summary statistics
+- [x] Add property CRUD (Create, Read, Update Status, Delete)
+- [x] Implement seller inquiry/lead management view
+
+## Phase 6: Admin Dashboard & Approval
+- [x] Add admin API client for user and platform management
+- [x] Implement admin dashboard with overview statistics
+- [x] Add user management table (list, delete)
+- [x] Implement property approval workflow (pending, approve, reject)
+- [x] Add global inquiry monitoring for admin
+
 ## Phase 3: Buyer Property Discovery
 - [x] Add property API client and map local SQLite response fields <!-- id: 20 -->
 - [x] Add responsive buyer property listing with loading, error, and empty states <!-- id: 21 -->

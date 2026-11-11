@@ -49,10 +49,14 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS images (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    property_id INTEGER NOT NULL,
+    property_id INTEGER,
     file_path TEXT NOT NULL,
+    thumbnail_path TEXT,
+    original_name TEXT,
     mime_type TEXT,
     size_bytes INTEGER,
+    width INTEGER,
+    height INTEGER,
     uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(property_id) REFERENCES properties(id) ON DELETE CASCADE
   );
@@ -81,6 +85,45 @@ if (!inquiryColumns.some((column) => column.name === 'viewing_date')) {
 }
 if (!inquiryColumns.some((column) => column.name === 'viewing_time')) {
   db.exec('ALTER TABLE inquiries ADD COLUMN viewing_time TEXT');
+}
+
+const imageColumns = db.prepare('PRAGMA table_info(images)').all() as Array<{ name: string; notnull: number }>;
+if (!imageColumns.some((column) => column.name === 'thumbnail_path')) {
+  db.exec('ALTER TABLE images ADD COLUMN thumbnail_path TEXT');
+}
+if (!imageColumns.some((column) => column.name === 'width')) {
+  db.exec('ALTER TABLE images ADD COLUMN width INTEGER');
+}
+if (!imageColumns.some((column) => column.name === 'height')) {
+  db.exec('ALTER TABLE images ADD COLUMN height INTEGER');
+}
+if (!imageColumns.some((column) => column.name === 'original_name')) {
+  db.exec('ALTER TABLE images ADD COLUMN original_name TEXT');
+}
+
+const propertyIdCol = imageColumns.find((c) => c.name === 'property_id');
+if (propertyIdCol && propertyIdCol.notnull === 1) {
+  db.exec(`
+    PRAGMA foreign_keys=OFF;
+    CREATE TABLE images_temp (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      property_id INTEGER,
+      file_path TEXT NOT NULL,
+      thumbnail_path TEXT,
+      original_name TEXT,
+      mime_type TEXT,
+      size_bytes INTEGER,
+      width INTEGER,
+      height INTEGER,
+      uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(property_id) REFERENCES properties(id) ON DELETE CASCADE
+    );
+    INSERT INTO images_temp (id, property_id, file_path, thumbnail_path, original_name, mime_type, size_bytes, width, height, uploaded_at)
+    SELECT id, CASE WHEN property_id <= 0 THEN NULL ELSE property_id END, file_path, thumbnail_path, original_name, mime_type, size_bytes, width, height, uploaded_at FROM images;
+    DROP TABLE images;
+    ALTER TABLE images_temp RENAME TO images;
+    PRAGMA foreign_keys=ON;
+  `);
 }
 
 export { db };

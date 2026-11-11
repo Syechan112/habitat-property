@@ -1,4 +1,5 @@
 import { localAuthService } from '@/services/auth-local'
+import { deviceStorage } from '@/services/device-storage'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'
 
@@ -57,21 +58,83 @@ export interface AdminInquiry {
 }
 
 export const adminApi = {
-  getUsers: () => request<AdminUser[]>('/users'),
-  getAllProperties: (query?: Record<string, string>) => {
-    const qs = Object.entries(query ?? {})
-      .filter(([, v]) => v !== undefined && v !== null && v !== '')
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-      .join('&')
-    return request<Array<AdminProperty>>(`/properties${qs ? '?' + qs : ''}`)
+  getUsers: async (): Promise<AdminUser[]> => {
+    try {
+      return await request<AdminUser[]>('/users')
+    } catch {
+      return deviceStorage.getUsers().map((u) => ({
+        id: u.id,
+        email: u.email,
+        role: u.role,
+        phone: u.phone ?? null,
+        created_at: u.created_at,
+      }))
+    }
   },
-  getInquiries: () => request<AdminInquiry[]>('/inquiries'),
-  updatePropertyStatus: (id: number, status: string) =>
-    request<{ ok: boolean }>(`/properties/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  updateInquiryStatus: (id: number, status: string) =>
-    request<{ ok: boolean }>(`/inquiries/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  deleteProperty: (id: number) =>
-    request<{ ok: boolean }>(`/properties/${id}`, { method: 'DELETE' }),
-  deleteUser: (id: number) =>
-    request<{ ok: boolean }>(`/users/${id}`, { method: 'DELETE' }),
+
+  getAllProperties: async (query?: Record<string, string>): Promise<AdminProperty[]> => {
+    try {
+      const qs = Object.entries(query ?? {})
+        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&')
+      return await request<Array<AdminProperty>>(`/properties${qs ? '?' + qs : ''}`)
+    } catch {
+      let list = deviceStorage.getProperties('admin')
+      if (query?.city) list = list.filter((p) => p.city.toLowerCase() === query.city.toLowerCase())
+      if (query?.type) list = list.filter((p) => p.propertyType.toLowerCase() === query.type.toLowerCase())
+      if (query?.status) list = list.filter((p) => p.status.toLowerCase() === query.status.toLowerCase())
+      return list as any as AdminProperty[]
+    }
+  },
+
+  getInquiries: async (): Promise<AdminInquiry[]> => {
+    try {
+      return await request<AdminInquiry[]>('/inquiries')
+    } catch {
+      return deviceStorage.getInquiries()
+    }
+  },
+
+  updatePropertyStatus: async (id: number, status: string): Promise<{ ok: boolean }> => {
+    try {
+      return await request<{ ok: boolean }>(`/properties/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      })
+    } catch {
+      const ok = deviceStorage.updatePropertyStatus(id, status)
+      return { ok }
+    }
+  },
+
+  updateInquiryStatus: async (id: number, status: string): Promise<{ ok: boolean }> => {
+    try {
+      return await request<{ ok: boolean }>(`/inquiries/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      })
+    } catch {
+      const ok = deviceStorage.updateInquiryStatus(id, status)
+      return { ok }
+    }
+  },
+
+  deleteProperty: async (id: number): Promise<{ ok: boolean }> => {
+    try {
+      return await request<{ ok: boolean }>(`/properties/${id}`, { method: 'DELETE' })
+    } catch {
+      const ok = deviceStorage.deleteProperty(id)
+      return { ok }
+    }
+  },
+
+  deleteUser: async (id: number): Promise<{ ok: boolean }> => {
+    try {
+      return await request<{ ok: boolean }>(`/users/${id}`, { method: 'DELETE' })
+    } catch {
+      const ok = deviceStorage.deleteUser(id)
+      return { ok }
+    }
+  },
 }

@@ -1,3 +1,5 @@
+import { deviceStorage } from '@/services/device-storage'
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'
 
 export interface LoginPayload {
@@ -27,19 +29,43 @@ async function fetchJson<T>(url: string, options: RequestInit): Promise<T> {
 }
 
 export const localAuthService = {
-  signUp: (payload: RegisterPayload) =>
-    fetchJson<{ token: string; user: UserRecord }>(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }),
+  signUp: async (payload: RegisterPayload) => {
+    try {
+      return await fetchJson<{ token: string; user: UserRecord }>(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    } catch {
+      // Fallback ke penyimpanan perangkat lokal jika backend offline
+      const created = deviceStorage.registerUser(payload.email, payload.role)
+      return {
+        token: `dev_token_${created.role}_${created.id}`,
+        user: { id: created.id, email: created.email, role: created.role },
+      }
+    }
+  },
 
-  signIn: (payload: LoginPayload) =>
-    fetchJson<{ token: string; user: UserRecord }>(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }),
+  signIn: async (payload: LoginPayload) => {
+    try {
+      return await fetchJson<{ token: string; user: UserRecord }>(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    } catch {
+      // Fallback ke akun di perangkat lokal
+      const users = deviceStorage.getUsers()
+      const found = users.find((u) => u.email.toLowerCase() === payload.email.toLowerCase())
+      if (found) {
+        return {
+          token: `dev_token_${found.role}_${found.id}`,
+          user: { id: found.id, email: found.email, role: found.role },
+        }
+      }
+      throw new Error('Email atau password tidak cocok. Silakan coba lagi.')
+    }
+  },
 
   signOut: () => {
     localStorage.removeItem('habitat_token')

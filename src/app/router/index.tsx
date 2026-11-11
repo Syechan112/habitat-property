@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { RoleMismatchFeedback } from '@/components/feedback'
 import { useAuth } from '@/app/providers/auth-provider'
 import LoginPage from '@/features/auth/pages/LoginPage'
 import RegisterPage from '@/features/auth/pages/RegisterPage'
@@ -8,48 +10,48 @@ import ComparePage from '@/features/buyer/properties/compare-page'
 import SellerDashboardPage from '@/features/seller/dashboard/page'
 import SellerListingsPage from '@/features/seller/listings/page'
 import AdminDashboardPage from '@/features/admin/dashboard/page'
+import LandingPage from '@/features/landing/page'
+import { Header, Footer } from '@/components/layout'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 
-function AuthenticatedLayout() {
+function AuthenticatedGuard() {
   const { session, role } = useAuth()
-  const targetRole = window.location.pathname.split('/')[1]
+  const location = useLocation()
+  const targetRole = location.pathname.split('/')[1]
+  const [showMismatch, setShowMismatch] = useState(false)
+
+  useEffect(() => {
+    if (session && role && targetRole && targetRole !== role) {
+      setShowMismatch(true)
+    } else {
+      setShowMismatch(false)
+    }
+  }, [session, role, targetRole])
 
   if (!session || !role) return <Navigate to="/login" replace />
-  if (targetRole !== role) return <Navigate to={`/${role}`} replace />
+
+  if (targetRole !== role) {
+    return (
+      <RoleMismatchFeedback
+        isOpen={showMismatch}
+        targetRole={targetRole}
+        onClose={() => setShowMismatch(false)}
+      />
+    )
+  }
+
   return <Outlet />
 }
 
-function DashboardLayout({ role }: { role: 'buyer' | 'seller' | 'admin' }) {
-  const { signOut } = useAuth()
-
+function PublicLayout() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="flex items-center justify-between border-b border-border bg-white px-6 py-4">
-        <a href={`/${role}`} className="font-semibold tracking-tight">HABITAT<span className="text-accent">.</span></a>
-        <div className="flex items-center gap-4">
-          <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium capitalize">{role}</span>
-          <button className="text-sm text-muted-foreground hover:text-foreground" onClick={() => signOut()}>Sign out</button>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-6 py-10">
+    <div className="min-h-screen bg-canvas flex flex-col">
+      <Header />
+      <main className="flex-1">
         <Outlet />
       </main>
+      <Footer />
     </div>
-  )
-}
-
-function Login() {
-  return (
-    <main className="grid min-h-screen place-items-center bg-background px-6">
-      <LoginPage />
-    </main>
-  )
-}
-
-function Register() {
-  return (
-    <main className="grid min-h-screen place-items-center bg-background px-6">
-      <RegisterPage />
-    </main>
   )
 }
 
@@ -57,23 +59,45 @@ function AppRoutes() {
   const { role, isLoading, session } = useAuth()
 
   if (isLoading) {
-    return <div className="grid min-h-screen place-items-center bg-background"><div className="text-sm text-muted-foreground">Loading...</div></div>
+    return (
+      <div className="grid min-h-screen place-items-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+      </div>
+    )
   }
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={session && role ? `/${role}` : '/login'} replace />} />
-      <Route path="/login" element={session && role ? <Navigate to={`/${role}`} replace /> : <Login />} />
-      <Route path="/register" element={session && role ? <Navigate to={`/${role}`} replace /> : <Register />} />
-      <Route element={<AuthenticatedLayout />}>
+      {/* Public Routes */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/architecture" element={<LandingPage />} />
+        <Route path="/living-pillars" element={<LandingPage />} />
+        <Route path="/bento" element={<LandingPage />} />
+        <Route path="/metrics" element={<LandingPage />} />
+      </Route>
+
+      {/* Auth Routes */}
+      <Route
+        path="/login"
+        element={session && role ? <Navigate to={`/${role}`} replace /> : <LoginPage />}
+      />
+      <Route
+        path="/register"
+        element={session && role ? <Navigate to={`/${role}`} replace /> : <RegisterPage />}
+      />
+
+      {/* Authenticated Routes */}
+      <Route element={<AuthenticatedGuard />}>
         <Route element={<DashboardLayout role="buyer" />}>
-          <Route path="/buyer" element={<BuyerPropertiesPage />} />
+          <Route path="/buyer" element={<Navigate to="/buyer/properties" replace />} />
           <Route path="/buyer/properties" element={<BuyerPropertiesPage />} />
           <Route path="/buyer/properties/:id" element={<PropertyDetailPage />} />
           <Route path="/buyer/compare" element={<ComparePage />} />
         </Route>
         <Route element={<DashboardLayout role="seller" />}>
           <Route path="/seller" element={<SellerDashboardPage />} />
+          <Route path="/seller/inquiries" element={<SellerDashboardPage />} />
           <Route path="/seller/listings" element={<SellerListingsPage />} />
           <Route path="/seller/listings/:id" element={<SellerListingsPage />} />
           <Route path="/seller/listings/new" element={<SellerListingsPage />} />
@@ -85,7 +109,8 @@ function AppRoutes() {
           <Route path="/admin/inquiries" element={<AdminDashboardPage />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to={session && role ? `/${role}` : '/login'} replace />} />
+
+      <Route path="*" element={<Navigate to={session && role ? `/${role}` : '/'} replace />} />
     </Routes>
   )
 }

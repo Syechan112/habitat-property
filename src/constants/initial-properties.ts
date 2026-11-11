@@ -1,0 +1,190 @@
+export interface StoredProperty {
+  id: number
+  title: string
+  description: string
+  price: number
+  location: string
+  city: string
+  propertyType: 'villa' | 'house' | 'apartment' | 'commercial' | 'land'
+  bedrooms: number
+  bathrooms: number
+  areaSqft: number
+  sellerId: number
+  sellerEmail: string
+  status: 'draft' | 'pending' | 'available' | 'reserved' | 'sold' | 'rejected' | 'archived'
+  images: Array<{
+    url: string
+    thumbnailUrl?: string
+    publicId: string
+    width?: number
+    height?: number
+    sizeBytes?: number
+  }>
+  created_at: string
+  updated_at: string
+}
+
+export const INITIAL_PROPERTIES: StoredProperty[] = [
+  {
+    id: 1,
+    title: 'Modern Villa in BSD',
+    description: 'Stunning modern villa with private pool and lush courtyard garden in BSD City.',
+    price: 1500000000,
+    location: 'BSD City',
+    city: 'Tangerang Selatan',
+    propertyType: 'villa',
+    bedrooms: 4,
+    bathrooms: 3,
+    areaSqft: 450,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: '/properties/villa-1.svg', publicId: 'villa-1' }],
+    created_at: '2026-11-10T07:15:42Z',
+    updated_at: '2026-11-10T07:15:42Z',
+  },
+  {
+    id: 2,
+    title: 'Cozy Apartment in SCBD',
+    description: 'Luxury high-rise apartment with panoramic skyline view in central SCBD.',
+    price: 3500000000,
+    location: 'SCBD',
+    city: 'Jakarta Selatan',
+    propertyType: 'apartment',
+    bedrooms: 2,
+    bathrooms: 1,
+    areaSqft: 80,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: '/properties/apartment-1.svg', publicId: 'apartment-1' }],
+    created_at: '2026-11-10T07:15:43Z',
+    updated_at: '2026-11-10T07:15:43Z',
+  },
+  {
+    id: 3,
+    title: 'Spacious House in Bekasi',
+    description: 'Family-friendly contemporary house with green open space.',
+    price: 850000000,
+    location: 'Summarecon Bekasi',
+    city: 'Bekasi',
+    propertyType: 'house',
+    bedrooms: 3,
+    bathrooms: 2,
+    areaSqft: 120,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'pending',
+    images: [{ url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80', publicId: 'bekasi-1' }],
+    created_at: '2026-11-10T07:15:44Z',
+    updated_at: '2026-11-10T07:15:44Z',
+  },
+  {
+    id: 4,
+    title: 'Cliffside Tropical Villa',
+    description: 'Villa tropis kontemporer dengan infinity pool menghadap Samudra Hindia di tebing Uluwatu.',
+    price: 7200000000,
+    location: 'Uluwatu',
+    city: 'Bali',
+    propertyType: 'villa',
+    bedrooms: 4,
+    bathrooms: 4,
+    areaSqft: 520,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80', publicId: 'bali-1' }],
+    created_at: '2026-11-10T08:00:00Z',
+    updated_at: '2026-11-10T08:00:00Z',
+  },
+  {
+    id: 5,
+    title: 'Minimalist Dago Mountain Haven',
+    description: 'Hunian arsitektur brutalist hangat berhawa sejuk di perbukitan Dago Pakar Bandung.',
+    price: 2850000000,
+    location: 'Dago Atas',
+    city: 'Bandung',
+    propertyType: 'house',
+    bedrooms: 3,
+    bathrooms: 3,
+    areaSqft: 280,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', publicId: 'bandung-1' }],
+    created_at: '2026-11-10T08:10:00Z',
+    updated_at: '2026-11-10T08:10:00Z',
+  },
+  {
+    id: 6,
+    title: 'Grand Penthouse Graha Famili',
+    description: 'Penthouse lantai tertinggi dengan fasilitas privat lift dan interior marmer di Surabaya Barat.',
+    price: 5900000000,
+    location: 'Graha Famili',
+    city: 'Surabaya',
+    propertyType: 'apartment',
+    bedrooms: 3,
+    bathrooms: 3,
+    areaSqft: 310,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80', publicId: 'surabaya-1' }],
+    created_at: '2026-11-10T08:20:00Z',
+    updated_at: '2026-11-10T08:20:00Z',
+  },
+  {
+    id: 7,
+    title: 'Heritage Kaliurang Sanctuary',
+    description: 'Residensi perpaduan estetika vernakular Jawa dan kenyamanan modern di kaki Gunung Merapi.',
+    price: 2400000000,
+    location: 'Kaliurang',
+    city: 'Yogyakarta',
+    propertyType: 'villa',
+    bedrooms: 4,
+    bathrooms: 3,
+    areaSqft: 380,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', publicId: 'jogja-1' }],
+    created_at: '2026-11-10T08:30:00Z',
+    updated_at: '2026-11-10T08:30:00Z',
+  },
+  {
+    id: 8,
+    title: 'Beachfront Oasis Resort Residence',
+    description: 'Sanctuary tepi pantai privat dengan akses langsung pasir putih dan panorama laut Senggigi.',
+    price: 6400000000,
+    location: 'Senggigi',
+    city: 'Lombok',
+    propertyType: 'villa',
+    bedrooms: 3,
+    bathrooms: 3,
+    areaSqft: 420,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1200&q=80', publicId: 'lombok-1' }],
+    created_at: '2026-11-10T08:40:00Z',
+    updated_at: '2026-11-10T08:40:00Z',
+  },
+  {
+    id: 9,
+    title: 'Menteng Executive Residence',
+    description: 'Estate eksklusif di jantung kawasan prestisius dengan ceiling tinggi dan courtyard asri.',
+    price: 14500000000,
+    location: 'Kebayoran Baru',
+    city: 'Jakarta Selatan',
+    propertyType: 'house',
+    bedrooms: 5,
+    bathrooms: 5,
+    areaSqft: 650,
+    sellerId: 2,
+    sellerEmail: 'seller@habitat.test',
+    status: 'available',
+    images: [{ url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80', publicId: 'menteng-1' }],
+    created_at: '2026-11-10T08:50:00Z',
+    updated_at: '2026-11-10T08:50:00Z',
+  },
+]

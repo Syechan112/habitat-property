@@ -1,34 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --color-background: #fbfaf7;
-  --color-foreground: #1d2924;
-  --color-card: #ffffff;
-  --color-card-foreground: #1d2924;
-  --color-primary: #1d2924;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #e9f0eb;
-  --color-secondary-foreground: #1d2924;
-  --color-muted: #f0f3ef;
-  --color-muted-foreground: #617069;
-  --color-accent: #d7a84d;
-  --color-accent-foreground: #1d2924;
-  --color-border: #dce4de;
-  --color-input: #dce4de;
-  --color-ring: #d7a84d;
-  --color-destructive: #b42318;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Core Architectural Canvas */
+  --color-canvas: #F8FAFC;
+  --color-canvas-soft: #F1F5F9;
+  --color-canvas-subtle: #EDF2F7;
+  
+  /* Dark & Obsidian Surfaces */
+  --color-dark: #090D14;
+  --color-dark-surface: #0F172A;
+  --color-dark-subtle: #1E293B;
+  
+  /* Natural Emerald & Earth Palettes */
+  --color-emerald-deep: #022C22;
+  --color-emerald: #064E3B;
+  --color-emerald-accent: #0F5257;
+  --color-emerald-subtle: #ECFDF5;
+  --color-emerald-border: #A7F3D0;
+  
+  /* Electric Lime & Chartreuse Highlight Tokens */
+  --color-accent: #D4FF00;
+  --color-accent-hover: #C2ED00;
+  --color-lime-vibrant: #84CC16;
+  --color-lime-soft: #F7FEE7;
+  
+  /* UI Surface Colors */
+  --color-card: #FFFFFF;
+  --color-card-subtle: #F8FAFC;
+  --color-card-muted: #F1F5F9;
+  --color-muted: #64748B;
+  --color-muted-light: #94A3B8;
+  --color-border: #E2E8F0;
+  --color-border-subtle: #F1F5F9;
+  --color-destructive: #EF4444;
+  --color-destructive-soft: #FEF2F2;
 }
 
-:root {
-  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  color: #1d2924;
-  background: #fbfaf7;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: #E2E8F0;
+  }
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    background: #F8FAFC;
+    color: #090D14;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+  button, a, input, select, textarea {
+    font: inherit;
+  }
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::selection {
+    background-color: #D4FF00;
+    color: #090D14;
+  }
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
-button, input { font: inherit; }
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Tactile Drop Shadows */
+  .shadow-tactile-xs {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  }
+  .shadow-tactile-sm {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  }
+  .shadow-tactile-md {
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  }
+  .shadow-tactile-lg {
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  }
+  .shadow-tactile-xl {
+    box-shadow: 0 30px 60px -20px rgba(9, 13, 20, 0.18), 0 0 0 1px rgba(9, 13, 20, 0.04);
+  }
+  .shadow-lime-glow {
+    box-shadow: 0 0 25px -5px rgba(212, 255, 0, 0.45);
+  }
+  .shadow-emerald-glow {
+    box-shadow: 0 10px 30px -10px rgba(6, 78, 59, 0.3);
+  }
+
+  /* Glassmorphism Panels */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  .glass-panel-dark {
+    background: rgba(9, 13, 20, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  /* 3D Perspective Stage */
+  .stage-3d {
+    perspective: 1200px;
+    transform-style: preserve-3d;
+  }
+  .stage-3d-card {
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+  }
+  .stage-3d-card:hover {
+    transform: translateY(-6px) rotateX(1.5deg) rotateY(-1.5deg);
+  }
+
+  /* Hover micro-interactions */
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px -8px rgba(9, 13, 20, 0.08);
+  }
+  
+  /* Gradient text */
+  .text-gradient-emerald {
+    background: linear-gradient(135deg, #022C22 0%, #064E3B 50%, #0F5257 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-gradient-dark {
+    background: linear-gradient(135deg, #090D14 0%, #1E293B 70%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
